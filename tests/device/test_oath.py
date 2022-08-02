@@ -145,8 +145,11 @@ HMAC_PARAMS = [
 
 def _ids_hmac(params):
     key, challenge, hash_algorithm, expected = params
-    key_s = key.hex() if len(key) < 6 else key[:6].hex() + "..."
-    challenge_s = challenge.hex() if len(challenge) < 6 else challenge[:6].hex() + "..."
+    key_s = key.hex() if len(key) < 6 else f"{key[:6].hex()}..."
+    challenge_s = (
+        challenge.hex() if len(challenge) < 6 else f"{challenge[:6].hex()}..."
+    )
+
     return f"{hash_algorithm.name}-{key_s}-{challenge_s}"
 
 
@@ -154,9 +157,10 @@ class TestHmacVectors:
     @pytest.mark.parametrize("params", HMAC_PARAMS, ids=_ids_hmac)
     def test_vector(self, session, params):
         key, challenge, hash_algorithm, expected = params
-        if hash_algorithm == HASH_ALGORITHM.SHA512:
-            if session.version < (4, 3, 1) or is_fips_version(session.version):
-                pytest.skip("SHA512 requires (non-FIPS) YubiKey 4.3.1 or later")
+        if hash_algorithm == HASH_ALGORITHM.SHA512 and (
+            session.version < (4, 3, 1) or is_fips_version(session.version)
+        ):
+            pytest.skip("SHA512 requires (non-FIPS) YubiKey 4.3.1 or later")
         cred = session.put_credential(
             CredentialData("test", OATH_TYPE.TOTP, hash_algorithm, key)
         )
@@ -198,9 +202,10 @@ class TestTotpVectors:
     )
     def test_vector(self, session, params, digits):
         timestamp, hash_algorithm, value, key = params
-        if hash_algorithm == HASH_ALGORITHM.SHA512:
-            if session.version < (4, 3, 1) or is_fips_version(session.version):
-                pytest.skip("SHA512 requires (non-FIPS) YubiKey 4.3.1 or later")
+        if hash_algorithm == HASH_ALGORITHM.SHA512 and (
+            session.version < (4, 3, 1) or is_fips_version(session.version)
+        ):
+            pytest.skip("SHA512 requires (non-FIPS) YubiKey 4.3.1 or later")
 
         cred = session.put_credential(
             CredentialData("test", OATH_TYPE.TOTP, hash_algorithm, key, digits)

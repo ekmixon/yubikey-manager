@@ -200,10 +200,10 @@ class WinHidOtpConnection(OtpConnection):
 
     def receive(self):
         buf = ctypes.create_string_buffer(9)
-        result = hid.HidD_GetFeature(self.handle, buf, ctypes.sizeof(buf))
-        if not result:
+        if result := hid.HidD_GetFeature(self.handle, buf, ctypes.sizeof(buf)):
+            return buf.raw[1:]
+        else:
             raise WinError()
-        return buf.raw[1:]
 
     def send(self, data):
         buf = ctypes.create_string_buffer(b"\0" + bytes(data))
@@ -214,11 +214,10 @@ class WinHidOtpConnection(OtpConnection):
 
 def get_vid_pid(device):
     attributes = HidAttributes()
-    result = hid.HidD_GetAttributes(device, ctypes.byref(attributes))
-    if not result:
+    if result := hid.HidD_GetAttributes(device, ctypes.byref(attributes)):
+        return attributes.VendorID, attributes.ProductID
+    else:
         raise WinError()
-
-    return attributes.VendorID, attributes.ProductID
 
 
 def get_usage(device):
@@ -304,8 +303,7 @@ def list_paths():
 
             path = ctypes.string_at(ctypes.addressof(interface_detail.DevicePath))
             if VID_RE.search(path):
-                pid_match = PID_RE.search(path)
-                if pid_match:
+                if pid_match := PID_RE.search(path):
                     paths.append((int(pid_match.group(1), 16), path))
         return paths
     finally:

@@ -235,10 +235,7 @@ def get_int_property(dev, key):
 
     out = ctypes.c_int32()
     ret = cf.CFNumberGetValue(type_ref, K_CF_NUMBER_SINT32_TYPE, ctypes.byref(out))
-    if not ret:
-        return None
-
-    return out.value
+    return out.value if ret else None
 
 
 def get_device_id(device_handle):

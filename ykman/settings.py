@@ -41,7 +41,7 @@ class Settings(dict):
     _config_dir = HOME_CONFIG
 
     def __init__(self, name):
-        self.fname = Path(self._config_dir).expanduser().resolve() / (name + ".json")
+        self.fname = Path(self._config_dir).expanduser().resolve() / f"{name}.json"
         if self.fname.is_file():
             with self.fname.open("r") as fd:
                 self.update(json.load(fd))

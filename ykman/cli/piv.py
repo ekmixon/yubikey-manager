@@ -297,8 +297,7 @@ def change_pin(ctx, pin, new_pin):
         pivman_change_pin(session, pin, new_pin)
         click.echo("New PIN set.")
     except InvalidPinError as e:
-        attempts = e.attempts_remaining
-        if attempts:
+        if attempts := e.attempts_remaining:
             logger.debug(
                 "Failed to change the PIN, %d tries left", attempts, exc_info=e
             )
@@ -342,8 +341,7 @@ def change_puk(ctx, puk, new_puk):
         session.change_puk(puk, new_puk)
         click.echo("New PUK set.")
     except InvalidPinError as e:
-        attempts = e.attempts_remaining
-        if attempts:
+        if attempts := e.attempts_remaining:
             logger.debug("Failed to change PUK, %d tries left", attempts, exc_info=e)
             cli_fail("PUK change failed - %d tries left." % attempts)
         else:
@@ -503,8 +501,7 @@ def unblock_pin(ctx, puk, new_pin):
         session.unblock_pin(puk, new_pin)
         click.echo("PIN unblocked")
     except InvalidPinError as e:
-        attempts = e.attempts_remaining
-        if attempts:
+        if attempts := e.attempts_remaining:
             logger.debug("Failed to unblock PIN, %d tries left", attempts, exc_info=e)
             cli_fail("PIN unblock failed - %d tries left." % attempts)
         else:
@@ -566,7 +563,7 @@ def generate_key(
     public_key_output.write(
         public_key.public_bytes(
             encoding=key_encoding,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            key_encoding=serialization.PublicFormat.SubjectPublicKeyInfo,
         )
     )
 
@@ -866,7 +863,7 @@ def generate_certificate(
 
     if "=" not in subject:
         # Old style, common name only.
-        subject = "CN=" + subject
+        subject = f"CN={subject}"
 
     try:
         with prompt_timeout():
@@ -915,7 +912,7 @@ def generate_certificate_signing_request(
 
     if "=" not in subject:
         # Old style, common name only.
-        subject = "CN=" + subject
+        subject = f"CN={subject}"
 
     try:
         with prompt_timeout():
@@ -1154,11 +1151,10 @@ def _authenticate(ctx, session, management_key, mgm_key_prompt, no_prompt=False)
     if not management_key:
         if no_prompt:
             ctx.fail("Management key required.")
+        elif mgm_key_prompt is None:
+            management_key = _prompt_management_key()
         else:
-            if mgm_key_prompt is None:
-                management_key = _prompt_management_key()
-            else:
-                management_key = _prompt_management_key(mgm_key_prompt)
+            management_key = _prompt_management_key(mgm_key_prompt)
     try:
         try:
             key_type = session.get_management_key_metadata().key_type

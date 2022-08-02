@@ -22,8 +22,7 @@ def _device(pytestconfig):
             serial = None
         else:
             pytest.skip("No serial specified for device tests")
-    reader = pytestconfig.getoption("reader")
-    if reader:
+    if reader := pytestconfig.getoption("reader"):
         readers = list_devices(reader)
         if len(readers) != 1:
             pytest.exit("No/Multiple readers matched")

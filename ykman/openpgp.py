@@ -156,7 +156,7 @@ class OID(bytes, Enum):
         try:
             return getattr(cls, name.upper())
         except AttributeError:
-            raise ValueError("Unsupported curve: " + name)
+            raise ValueError(f"Unsupported curve: {name}")
 
 
 def _get_curve_name(key):
@@ -321,11 +321,10 @@ class OpenPgpController(object):
         try:
             protocol.select(AID.OPENPGP)
         except ApduError as e:
-            if e.sw in (SW.NO_INPUT_DATA, SW.CONDITIONS_NOT_SATISFIED):
-                protocol.send_apdu(0, INS.ACTIVATE, 0, 0)
-                protocol.select(AID.OPENPGP)
-            else:
+            if e.sw not in (SW.NO_INPUT_DATA, SW.CONDITIONS_NOT_SATISFIED):
                 raise
+            protocol.send_apdu(0, INS.ACTIVATE, 0, 0)
+            protocol.select(AID.OPENPGP)
         self._version = self._read_version()
 
     @property
@@ -417,14 +416,13 @@ class OpenPgpController(object):
             return []
         if self.version < (5, 2, 1):
             return [TOUCH_MODE.ON, TOUCH_MODE.OFF, TOUCH_MODE.FIXED]
-        if self.version >= (5, 2, 1):
-            return [
-                TOUCH_MODE.ON,
-                TOUCH_MODE.OFF,
-                TOUCH_MODE.FIXED,
-                TOUCH_MODE.CACHED,
-                TOUCH_MODE.CACHED_FIXED,
-            ]
+        return [
+            TOUCH_MODE.ON,
+            TOUCH_MODE.OFF,
+            TOUCH_MODE.FIXED,
+            TOUCH_MODE.CACHED,
+            TOUCH_MODE.CACHED_FIXED,
+        ]
 
     @property
     def supports_attestation(self):
@@ -593,18 +591,15 @@ class OpenPgpController(object):
 
 def get_openpgp_info(controller: OpenPgpController) -> str:
     """Get human readable information about the OpenPGP configuration."""
-    lines = []
-    lines.append("OpenPGP version: %d.%d" % controller.get_openpgp_version())
-    lines.append("Application version: %d.%d.%d" % controller.version)
-    lines.append("")
+    lines = ["OpenPGP version: %d.%d" % controller.get_openpgp_version()]
+    lines.extend(("Application version: %d.%d.%d" % controller.version, ""))
     retries = controller.get_remaining_pin_tries()
     lines.append(f"PIN tries remaining: {retries.pin}")
     lines.append(f"Reset code tries remaining: {retries.reset}")
     lines.append(f"Admin PIN tries remaining: {retries.admin}")
     # Touch only available on YK4 and later
     if controller.version >= (4, 2, 6):
-        lines.append("")
-        lines.append("Touch policies")
+        lines.extend(("", "Touch policies"))
         lines.append(f"Signature key           {controller.get_touch(KEY_SLOT.SIG)!s}")
         lines.append(f"Encryption key          {controller.get_touch(KEY_SLOT.ENC)!s}")
         lines.append(f"Authentication key      {controller.get_touch(KEY_SLOT.AUT)!s}")

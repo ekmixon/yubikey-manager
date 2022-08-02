@@ -113,7 +113,7 @@ class CredentialData:
             raise ValueError("Missing OATH type")
         oath_type = OATH_TYPE[parsed.hostname.upper()]
 
-        params = dict((k, v[0]) for k, v in parse_qs(parsed.query).items())
+        params = {k: v[0] for k, v in parse_qs(parsed.query).items()}
         issuer = None
         name = unquote(parsed.path)[1:]  # Unquote and strip leading /
         if ":" in name:
@@ -173,7 +173,7 @@ def _format_cred_id(issuer, name, oath_type, period=DEFAULT_PERIOD):
     if oath_type == OATH_TYPE.TOTP and period != DEFAULT_PERIOD:
         cred_id += "%d/" % period
     if issuer:
-        cred_id += issuer + ":"
+        cred_id += f"{issuer}:"
     cred_id += name
     return cred_id.encode()
 
@@ -181,21 +181,18 @@ def _format_cred_id(issuer, name, oath_type, period=DEFAULT_PERIOD):
 def _parse_cred_id(cred_id, oath_type):
     data = cred_id.decode()
     if oath_type == OATH_TYPE.TOTP:
-        match = TOTP_ID_PATTERN.match(data)
-        if match:
-            period_str = match.group(2)
-            return (
-                match.group(4),
-                match.group(5),
-                int(period_str) if period_str else DEFAULT_PERIOD,
-            )
-        else:
+        if not (match := TOTP_ID_PATTERN.match(data)):
             return None, data, DEFAULT_PERIOD
+        period_str = match.group(2)
+        return (
+            match.group(4),
+            match.group(5),
+            int(period_str) if period_str else DEFAULT_PERIOD,
+        )
+    elif ":" in data:
+        issuer, data = data.split(":", 1)
     else:
-        if ":" in data:
-            issuer, data = data.split(":", 1)
-        else:
-            issuer = None
+        issuer = None
     return issuer, data, 0
 
 

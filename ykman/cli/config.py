@@ -567,19 +567,13 @@ def mode(ctx, mode, touch_eject, autoeject_timeout, chalresp_timeout, force):
     my_mode = Mode(USB_INTERFACE.for_capabilities(usb_enabled))
     usb_supported = info.supported_capabilities[TRANSPORT.USB]
     interfaces_supported = USB_INTERFACE.for_capabilities(usb_supported)
-    pid = ctx.obj["pid"]
-    if pid:
-        key_type = pid.get_type()
-    else:
-        key_type = None
-
+    key_type = pid.get_type() if (pid := ctx.obj["pid"]) else None
     if autoeject_timeout:  # autoeject implies touch eject
         touch_eject = True
     autoeject = autoeject_timeout if touch_eject else None
 
-    if mode.interfaces != USB_INTERFACE.CCID:
-        if touch_eject:
-            ctx.fail("--touch-eject can only be used when setting CCID-only mode")
+    if mode.interfaces != USB_INTERFACE.CCID and touch_eject:
+        ctx.fail("--touch-eject can only be used when setting CCID-only mode")
 
     if not force:
         if mode == my_mode:

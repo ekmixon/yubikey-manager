@@ -240,7 +240,7 @@ class TestOATH:
     @condition.min_version(4)
     def test_add_32_creds(self, ykman_cli):
         for i in range(32):
-            ykman_cli("oath", "accounts", "add", "test" + str(i), "abba")
+            ykman_cli("oath", "accounts", "add", f"test{str(i)}", "abba")
             output = ykman_cli("oath", "accounts", "list").output
             lines = output.strip().split("\n")
             assert len(lines) == i + 1

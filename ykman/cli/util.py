@@ -199,8 +199,7 @@ def click_prompt(prompt, err=True, **kwargs):
     use it.
     """
     if not sys.stdin.isatty():  # Piped from stdin, see if there is data
-        line = sys.stdin.readline()
-        if line:
+        if line := sys.stdin.readline():
             return line.rstrip("\n")
 
     # No piped data, use standard prompt

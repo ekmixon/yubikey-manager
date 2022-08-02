@@ -109,8 +109,7 @@ def ccid_info():
 
 
 def otp_info():
-    lines = []
-    lines.append("Detected YubiKeys over HID OTP:")
+    lines = ["Detected YubiKeys over HID OTP:"]
     try:
         for dev in list_otp_devices():
             lines.append(f"\t{dev!r}")
@@ -133,16 +132,21 @@ def otp_info():
 
 
 def fido_info():
-    lines = []
-    lines.append("Detected YubiKeys over HID FIDO:")
+    lines = ["Detected YubiKeys over HID FIDO:"]
     try:
         for dev in list_ctap_devices():
             lines.append(f"\t{dev!r}")
             try:
                 with dev.open_connection(FidoConnection) as conn:
-                    lines.append("CTAP device version: %d.%d.%d" % conn.device_version)
-                    lines.append(f"CTAPHID protocol version: {conn.version}")
-                    lines.append("Capabilities: %d" % conn.capabilities)
+                    lines.extend(
+                        (
+                            "CTAP device version: %d.%d.%d"
+                            % conn.device_version,
+                            f"CTAPHID protocol version: {conn.version}",
+                            "Capabilities: %d" % conn.capabilities,
+                        )
+                    )
+
                     lines.extend(mgmt_info(dev.pid, conn))
                     try:
                         ctap2 = Ctap2(conn)
@@ -150,8 +154,9 @@ def fido_info():
                         if ctap2.info.options.get("clientPin"):
                             client_pin = ClientPin(ctap2)
                             lines.append(f"PIN retries: {client_pin.get_pin_retries()}")
-                            bio_enroll = ctap2.info.options.get("bioEnroll")
-                            if bio_enroll:
+                            if bio_enroll := ctap2.info.options.get(
+                                "bioEnroll"
+                            ):
                                 lines.append(
                                     "Fingerprint retries: "
                                     f"{client_pin.get_uv_retries()}"
@@ -172,8 +177,7 @@ def fido_info():
 
 
 def get_diagnostics():
-    lines = []
-    lines.append(f"ykman: {ykman_version}")
+    lines = [f"ykman: {ykman_version}"]
     log_sys_info(lines.append)
     lines.append("")
 

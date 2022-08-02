@@ -140,7 +140,7 @@ def scan_devices() -> Tuple[Mapping[PID, int], int]:
         except Exception as e:
             logger.error("Unable to list devices for connection", exc_info=e)
             devs = []
-        merged.update(Counter(d.pid for d in devs if d.pid is not None))
+        merged |= Counter(d.pid for d in devs if d.pid is not None)
         fingerprints.update({d.fingerprint for d in devs})
     if sys.platform == "win32" and not bool(ctypes.windll.shell32.IsUserAnAdmin()):
         from .hid.windows import list_paths
@@ -407,11 +407,7 @@ def _read_info_ctap(conn, key_type, interfaces):
         return mgmt.read_device_info()
     except Exception:  # SKY 1, NEO, or YKP
         # Best guess version
-        if key_type == YUBIKEY.YKP:
-            version = Version(4, 0, 0)
-        else:
-            version = Version(3, 0, 0)
-
+        version = Version(4, 0, 0) if key_type == YUBIKEY.YKP else Version(3, 0, 0)
         supported_apps = {TRANSPORT.USB: CAPABILITY.U2F}
         if key_type == YUBIKEY.NEO:
             supported_apps[TRANSPORT.USB] |= BASE_NEO_APPS
@@ -492,17 +488,21 @@ def read_info(pid: Optional[PID], conn: Connection) -> DeviceInfo:
         ]
 
     # Workaround for invalid configurations.
-    if info.version >= (4, 0, 0):
-        if info.form_factor in (
+    if info.version >= (4, 0, 0) and (
+        info.form_factor
+        in (
             FORM_FACTOR.USB_A_NANO,
             FORM_FACTOR.USB_C_NANO,
             FORM_FACTOR.USB_C_LIGHTNING,
-        ) or (
-            info.form_factor is FORM_FACTOR.USB_C_KEYCHAIN and info.version < (5, 2, 4)
-        ):
-            # Known not to have NFC
-            info.supported_capabilities.pop(TRANSPORT.NFC, None)
-            info.config.enabled_capabilities.pop(TRANSPORT.NFC, None)
+        )
+        or (
+            info.form_factor is FORM_FACTOR.USB_C_KEYCHAIN
+            and info.version < (5, 2, 4)
+        )
+    ):
+        # Known not to have NFC
+        info.supported_capabilities.pop(TRANSPORT.NFC, None)
+        info.config.enabled_capabilities.pop(TRANSPORT.NFC, None)
 
     return info
 
@@ -517,10 +517,7 @@ def _is_preview(version):
         ((5, 2, 0), (5, 2, 3)),
         ((5, 5, 0), (5, 5, 2)),
     )
-    for start, end in _PREVIEW_RANGES:
-        if start <= version < end:
-            return True
-    return False
+    return any(start <= version < end for start, end in _PREVIEW_RANGES)
 
 
 def get_name(info: DeviceInfo, key_type: Optional[YUBIKEY]) -> str:

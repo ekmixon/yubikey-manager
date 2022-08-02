@@ -449,9 +449,7 @@ class HotpSlotConfiguration(KeyboardSlotConfiguration):
 
     def imf(self: Cfg, imf: int) -> Cfg:
         if not (imf % 16 == 0 and 0 <= imf <= 0xFFFF0):
-            raise ValueError(
-                f"imf should be between {0} and {1048560}, evenly dividable by 16"
-            )
+            raise ValueError('imf should be between 0 and 1048560, evenly dividable by 16')
         self._uid = self._uid[:4] + struct.pack(">H", imf >> 4)
         return self
 

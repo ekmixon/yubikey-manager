@@ -173,7 +173,7 @@ def otp(ctx, access_code):
         try:
             access_code = parse_access_code_hex(access_code)
         except Exception as e:
-            ctx.fail("Failed to parse access code: " + str(e))
+            ctx.fail(f"Failed to parse access code: {str(e)}")
 
     ctx.obj["access_code"] = access_code
 
@@ -419,8 +419,9 @@ def yubiotp(
                 public_id,
                 private_id,
                 serial=info.serial,
-                user_agent="ykman/" + __version__,
+                user_agent=f"ykman/{__version__}",
             )
+
             click.echo("Upload to YubiCloud initiated successfully.")
         except PrepareUploadFailed as e:
             error_msg = "\n".join(e.messages())
@@ -443,7 +444,7 @@ def yubiotp(
         _failed_to_write_msg(ctx, e)
 
     if upload:
-        click.echo("Opening upload form in browser: " + upload_url)
+        click.echo(f"Opening upload form in browser: {upload_url}")
         webbrowser.open_new_tab(upload_url)
 
 
@@ -493,10 +494,12 @@ def static(ctx, slot, password, generate, length, keyboard_layout, no_enter, for
     if generate and not length:
         ctx.fail("Provide a length for the generated password.")
 
-    if not password and not generate:
-        password = click_prompt("Enter a static password")
-    elif not password and generate:
-        password = generate_static_pw(length, keyboard_layout)
+    if not password:
+        password = (
+            generate_static_pw(length, keyboard_layout)
+            if generate
+            else click_prompt("Enter a static password")
+        )
 
     scan_codes = encode(password, keyboard_layout)
 
@@ -553,30 +556,29 @@ def chalresp(ctx, slot, key, totp, touch, force, generate):
             key = parse_b32_key(key)
         else:
             key = parse_oath_key(key)
-    else:
-        if force and not generate:
-            ctx.fail(
-                "No secret key given. Please remove the --force flag, "
-                "set the KEY argument or set the --generate flag."
-            )
-        elif generate:
-            key = os.urandom(20)
-            if totp:
-                b32key = b32encode(key).decode()
-                click.echo(f"Using a randomly generated key (Base32): {b32key}")
-            else:
-                click.echo(f"Using a randomly generated key: {key.hex()}")
-        elif totp:
-            while True:
-                key = click_prompt("Enter a secret key (base32)")
-                try:
-                    key = parse_b32_key(key)
-                    break
-                except Exception as e:
-                    click.echo(e)
+    elif force and not generate:
+        ctx.fail(
+            "No secret key given. Please remove the --force flag, "
+            "set the KEY argument or set the --generate flag."
+        )
+    elif generate:
+        key = os.urandom(20)
+        if totp:
+            b32key = b32encode(key).decode()
+            click.echo(f"Using a randomly generated key (Base32): {b32key}")
         else:
-            key = click_prompt("Enter a secret key")
-            key = parse_oath_key(key)
+            click.echo(f"Using a randomly generated key: {key.hex()}")
+    elif totp:
+        while True:
+            key = click_prompt("Enter a secret key (base32)")
+            try:
+                key = parse_b32_key(key)
+                break
+            except Exception as e:
+                click.echo(e)
+    else:
+        key = click_prompt("Enter a secret key")
+        key = parse_oath_key(key)
 
     cred_type = "TOTP" if totp else "challenge-response"
     force or click.confirm(
@@ -649,11 +651,7 @@ def calculate(ctx, slot, challenge, totp, digits):
                 setattr(on_keepalive, "prompted", True)
 
         response = session.calculate_hmac_sha1(slot, challenge, event, on_keepalive)
-        if totp:
-            value = format_oath_code(response, int(digits))
-        else:
-            value = response.hex()
-
+        value = format_oath_code(response, int(digits)) if totp else response.hex()
         click.echo(value)
     except CommandError as e:
         _failed_to_write_msg(ctx, e)
@@ -709,7 +707,7 @@ def hotp(ctx, slot, key, digits, counter, identifier, no_enter, force):
         if len(identifier) == 4:
             identifier += f"{session.get_serial():08}"
         elif len(identifier) == 8:
-            identifier = "ubhe" + identifier
+            identifier = f"ubhe{identifier}"
         if len(identifier) != 12:
             raise ValueError("Incorrect length for token identifier.")
 
@@ -837,7 +835,7 @@ def settings(
         try:
             new_access_code = parse_access_code_hex(new_access_code)
         except Exception as e:
-            ctx.fail("Failed to parse access code: " + str(e))
+            ctx.fail(f"Failed to parse access code: {str(e)}")
 
     force or click.confirm(
         f"Update the settings for slot {slot}? "

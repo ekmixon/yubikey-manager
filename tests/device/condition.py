@@ -63,18 +63,12 @@ def capability(capability, transport=None):
 
 
 def min_version(major, minor=0, micro=0):
-    if isinstance(major, tuple):
-        vers = major
-    else:
-        vers = (major, minor, micro)
+    vers = major if isinstance(major, tuple) else (major, minor, micro)
     return check(lambda version: version >= vers, f"Version < {vers}")
 
 
 def max_version(major, minor=0, micro=0):
-    if isinstance(major, tuple):
-        vers = major
-    else:
-        vers = (major, minor, micro)
+    vers = major if isinstance(major, tuple) else (major, minor, micro)
     return check(lambda version: version <= vers, f"Version > {vers}")
 
 

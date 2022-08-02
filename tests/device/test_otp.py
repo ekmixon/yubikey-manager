@@ -19,9 +19,8 @@ def conn_type(request, version, transport):
     if transport == TRANSPORT.NFC:
         if conn_type != SmartCardConnection:
             pytest.skip("Using NFC")
-    else:
-        if conn_type == SmartCardConnection and (4, 0) <= version < (5, 3):
-            pytest.skip("3.x/5.3+ only")
+    elif conn_type == SmartCardConnection and (4, 0) <= version < (5, 3):
+        pytest.skip("3.x/5.3+ only")
     return conn_type
 
 

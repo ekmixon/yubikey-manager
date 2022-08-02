@@ -94,13 +94,7 @@ class PrepareUploadFailed(Exception):
         return [e.message() for e in self.errors]
 
 
-def prepare_upload_key(
-    key,
-    public_id,
-    private_id,
-    serial=None,
-    user_agent="python-yubikey-manager/" + __version__,
-):
+def prepare_upload_key(key, public_id, private_id, serial=None, user_agent=f"python-yubikey-manager/{__version__}"):
     modhex_public_id = modhex_encode(public_id)
     data = {
         "aes_key": key.hex(),
@@ -124,25 +118,23 @@ def prepare_upload_key(
 
     resp = httpconn.getresponse()
     if resp.status == 200:
-        url = json.loads(resp.read().decode("utf-8"))["finish_url"]
-        return url
+        return json.loads(resp.read().decode("utf-8"))["finish_url"]
+    resp_body = resp.read()
+    logger.debug("Upload failed with status %d: %s", resp.status, resp_body)
+    if resp.status == 404:
+        raise PrepareUploadFailed(
+            resp.status, resp_body, [PrepareUploadError.NOT_FOUND]
+        )
+    elif resp.status == 503:
+        raise PrepareUploadFailed(
+            resp.status, resp_body, [PrepareUploadError.SERVICE_UNAVAILABLE]
+        )
     else:
-        resp_body = resp.read()
-        logger.debug("Upload failed with status %d: %s", resp.status, resp_body)
-        if resp.status == 404:
-            raise PrepareUploadFailed(
-                resp.status, resp_body, [PrepareUploadError.NOT_FOUND]
-            )
-        elif resp.status == 503:
-            raise PrepareUploadFailed(
-                resp.status, resp_body, [PrepareUploadError.SERVICE_UNAVAILABLE]
-            )
-        else:
-            try:
-                errors = json.loads(resp_body.decode("utf-8")).get("errors")
-            except Exception:
-                errors = []
-            raise PrepareUploadFailed(resp.status, resp_body, errors)
+        try:
+            errors = json.loads(resp_body.decode("utf-8")).get("errors")
+        except Exception:
+            errors = []
+        raise PrepareUploadFailed(resp.status, resp_body, errors)
 
 
 def is_in_fips_mode(session: YubiOtpSession) -> bool:

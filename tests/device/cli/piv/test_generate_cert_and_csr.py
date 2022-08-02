@@ -66,12 +66,13 @@ class TestNonDefaultMgmKey:
             "-m",
             NON_DEFAULT_MANAGEMENT_KEY,
             "-s",
-            "subject-" + algo,
+            f"subject-{algo}",
             "-P",
             DEFAULT_PIN,
             "-",
             input=pubkey_output,
         )
+
         output = ykman_cli("piv", "certificates", "export", slot, "-").output
         cert = x509.load_pem_x509_certificate(output.encode(), default_backend())
         _verify_cert(cert, cert.public_key())
@@ -113,7 +114,7 @@ class TestNonDefaultMgmKey:
         self._test_generate_self_signed(ykman_cli, "9e", "ECCP256")
 
     def _test_generate_csr(self, ykman_cli, slot, algo):
-        subject_input = "subject-" + algo
+        subject_input = f"subject-{algo}"
         pubkey_output = ykman_cli(
             "piv",
             "keys",
@@ -204,10 +205,11 @@ class TestProtectedMgmKey:
             "-P",
             DEFAULT_PIN,
             "-s",
-            "subject-" + algo,
+            f"subject-{algo}",
             "-",
             input=pubkey_output,
         )
+
         output = ykman_cli("piv", "certificates", "export", slot, "-").output
         cert = x509.load_pem_x509_certificate(output.encode(), default_backend())
         _verify_cert(cert, cert.public_key())
@@ -249,7 +251,7 @@ class TestProtectedMgmKey:
         self._test_generate_self_signed(ykman_cli, "9e", "ECCP256")
 
     def _test_generate_csr(self, ykman_cli, slot, algo):
-        subject_input = "subject-" + algo
+        subject_input = f"subject-{algo}"
         pubkey_output = ykman_cli(
             "piv", "keys", "generate", slot, "-a", algo, "-P", DEFAULT_PIN, "-"
         ).output

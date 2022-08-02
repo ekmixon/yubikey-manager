@@ -58,7 +58,7 @@ def calculate_crc(data: bytes) -> int:
     crc = 0xFFFF
     for index in range(len(data)):
         crc ^= data[index]
-        for i in range(8):
+        for _ in range(8):
             j = crc & 1
             crc >>= 1
             if j == 1:

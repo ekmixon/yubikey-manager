@@ -45,7 +45,7 @@ class YUBIKEY(Enum):
         suffix = "_".join(
             t.name for t in USB_INTERFACE if t in USB_INTERFACE(interfaces)
         )
-        return PID[self.name + "_" + suffix]
+        return PID[f"{self.name}_{suffix}"]
 
 
 @unique
