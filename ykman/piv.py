@@ -263,7 +263,7 @@ def pivman_set_mgm_key(
     """Set a new management key, while keeping PivmanData in sync."""
     pivman = get_pivman_data(session)
 
-    if store_on_device or (not store_on_device and pivman.has_stored_key):
+    if store_on_device or pivman.has_stored_key:
         # Ensure we have access to protected data before overwriting key
         try:
             pivman_prot = get_pivman_protected_data(session)
@@ -287,7 +287,7 @@ def pivman_set_mgm_key(
         # Store key in protected pivman data
         pivman_prot.key = new_key
         session.put_object(OBJECT_ID_PIVMAN_PROTECTED_DATA, pivman_prot.get_bytes())
-    elif not store_on_device and pivman.has_stored_key:
+    elif pivman.has_stored_key:
         # If new key should not be stored and there is an old stored key,
         # try to clear it.
         try:
@@ -366,7 +366,7 @@ def check_key(
         elif isinstance(public_key, ec.EllipticCurvePublicKey):
             public_key.verify(test_sig, test_data, ec.ECDSA(hashes.SHA256()))
         else:
-            raise ValueError("Unknown key type: " + type(public_key))
+            raise ValueError(f"Unknown key type: {type(public_key)}")
         return True
 
     except ApduError as e:
@@ -420,9 +420,7 @@ def generate_ccc() -> bytes:
 def get_piv_info(session: PivSession) -> str:
     """Get human readable information about the PIV configuration."""
     pivman = get_pivman_data(session)
-    lines = []
-
-    lines.append("PIV version: %d.%d.%d" % session.version)
+    lines = ["PIV version: %d.%d.%d" % session.version]
 
     try:
         pin_data = session.get_pin_metadata()

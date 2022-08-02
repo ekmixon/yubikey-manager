@@ -91,8 +91,7 @@ class KEY_TYPE(IntEnum):
 
     @property
     def bit_len(self):
-        match = re.search(r"\d+$", self.name)
-        if match:
+        if match := re.search(r"\d+$", self.name):
             return int(match.group())
         raise ValueError("No bit_len")
 
@@ -103,7 +102,6 @@ class KEY_TYPE(IntEnum):
                 return getattr(cls, "RSA%d" % key.key_size)
             except AttributeError:
                 raise ValueError("Unsupported RSA key size: %d" % key.key_size)
-                pass  # Fall through to ValueError
         elif isinstance(key, ec.EllipticCurvePublicKey):
             curve_name = key.curve.name
             if curve_name == "secp256r1":
@@ -123,16 +121,11 @@ class MANAGEMENT_KEY_TYPE(IntEnum):
 
     @property
     def key_len(self):
-        if self.name == "TDES":
-            return 24
-        # AES
-        return int(self.name[3:]) // 8
+        return 24 if self.name == "TDES" else int(self.name[3:]) // 8
 
     @property
     def challenge_len(self):
-        if self.name == "TDES":
-            return 8
-        return 16
+        return 8 if self.name == "TDES" else 16
 
 
 def _parse_management_key(key_type, management_key):
@@ -318,9 +311,8 @@ def _retries_from_sw(version, sw):
     if version < (1, 0, 4):
         if 0x6300 <= sw <= 0x63FF:
             return sw & 0xFF
-    else:
-        if 0x63C0 <= sw <= 0x63CF:
-            return sw & 0x0F
+    elif 0x63C0 <= sw <= 0x63CF:
+        return sw & 0x0F
     return None
 
 
@@ -404,9 +396,12 @@ def check_key_support(
         raise NotSupportedError("Cached touch policy requires YubiKey 4.3 or later")
 
     # ROCA
-    if (4, 2, 0) <= version < (4, 3, 5):
-        if generate and key_type.algorithm == ALGORITHM.RSA:
-            raise NotSupportedError("RSA key generation not supported on this YubiKey")
+    if (
+        (4, 2, 0) <= version < (4, 3, 5)
+        and generate
+        and key_type.algorithm == ALGORITHM.RSA
+    ):
+        raise NotSupportedError("RSA key generation not supported on this YubiKey")
 
     # FIPS
     if (4, 4, 0) <= version < (4, 5, 0):
@@ -423,11 +418,7 @@ def _parse_device_public_key(key_type, encoded):
         exponent = bytes2int(data[0x82])
         return rsa.RSAPublicNumbers(exponent, modulus).public_key(default_backend())
     else:
-        if key_type == KEY_TYPE.ECCP256:
-            curve: Type[ec.EllipticCurve] = ec.SECP256R1
-        else:
-            curve = ec.SECP384R1
-
+        curve = ec.SECP256R1 if key_type == KEY_TYPE.ECCP256 else ec.SECP384R1
         try:
             # Added in cryptography 2.5
             return ec.EllipticCurvePublicKey.from_encoded_point(curve(), data[0x86])

@@ -616,10 +616,7 @@ def code(ctx, show_hidden, query, single, password, remember):
         for cred in sorted(creds):
             code = entries[cred]
             if code:
-                if is_steam(cred):
-                    code = calculate_steam(session, cred)
-                else:
-                    code = code.value
+                code = calculate_steam(session, cred) if is_steam(cred) else code.value
             elif cred.touch_required:
                 code = "[Requires Touch]"
             elif cred.oath_type == OATH_TYPE.HOTP:
@@ -628,8 +625,8 @@ def code(ctx, show_hidden, query, single, password, remember):
                 code = ""
             outputs.append((_string_id(cred), code))
 
-        longest_name = max(len(n) for (n, c) in outputs) if outputs else 0
-        longest_code = max(len(c) for (n, c) in outputs) if outputs else 0
+        longest_name = max((len(n) for n, c in outputs), default=0)
+        longest_code = max((len(c) for n, c in outputs), default=0)
         format_str = "{:<%d}  {:>%d}" % (longest_name, longest_code)
 
         for name, result in outputs:

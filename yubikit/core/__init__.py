@@ -57,8 +57,7 @@ class Version(NamedTuple):
 
     @classmethod
     def from_string(cls, data: str) -> "Version":
-        m = _VERSION_STRING_PATTERN.search(data)
-        if m:
+        if m := _VERSION_STRING_PATTERN.search(data):
             return cls(
                 int(m.group("major")), int(m.group("minor")), int(m.group("patch"))
             )
@@ -248,11 +247,11 @@ class Tlv(bytes):
                 buf.extend(ln_bytes)
             buf.extend(value)
             data = bytes(buf)
-        else:  # Binary TLV data
-            if value is not None:
-                raise ValueError("value can only be provided if tag_or_data is a tag")
+        elif value is None:
             data = tag_or_data
 
+        else:
+            raise ValueError("value can only be provided if tag_or_data is a tag")
         # mypy thinks this is wrong
         return super(Tlv, cls).__new__(cls, data)  # type: ignore
 
@@ -279,7 +278,7 @@ class Tlv(bytes):
 
     @classmethod
     def parse_dict(cls: Type[T_Tlv], data: bytes) -> Dict[int, bytes]:
-        return dict((tlv.tag, tlv.value) for tlv in cls.parse_list(data))
+        return {tlv.tag: tlv.value for tlv in cls.parse_list(data)}
 
     @classmethod
     def unpack(cls: Type[T_Tlv], tag: int, data: bytes) -> bytes:

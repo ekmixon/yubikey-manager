@@ -65,8 +65,7 @@ def _parse_pkcs12_pyopenssl(crypto, data, password):
         )
 
         certs = [p12.get_certificate()]
-        cas = p12.get_ca_certificates()
-        if cas:
+        if cas := p12.get_ca_certificates():
             certs.extend(cas)
         certs_pem = [
             crypto.dump_certificate(crypto.FILETYPE_PEM, cert) for cert in certs
@@ -103,9 +102,8 @@ def parse_private_key(data, password):
     """
     # PEM
     if is_pem(data):
-        if b"ENCRYPTED" in data:
-            if password is None:
-                raise InvalidPasswordError("No password provided for encrypted key.")
+        if b"ENCRYPTED" in data and password is None:
+            raise InvalidPasswordError("No password provided for encrypted key.")
         try:
             return serialization.load_pem_private_key(
                 data, password, backend=default_backend()
@@ -177,14 +175,14 @@ def get_leaf_certificates(certs):
     issuers = [
         cert.issuer.get_attributes_for_oid(x509.NameOID.COMMON_NAME) for cert in certs
     ]
-    leafs = [
+    return [
         cert
         for cert in certs
         if (
-            cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME) not in issuers
+            cert.subject.get_attributes_for_oid(x509.NameOID.COMMON_NAME)
+            not in issuers
         )
     ]
-    return leafs
 
 
 def is_pem(data):

@@ -58,15 +58,12 @@ def _hex(data: bytes) -> str:
 def _parse_apdu(data: str) -> Tuple[Tuple[int, int, int, int, bytes], Optional[int]]:
     m = APDU_PATTERN.match(data)
     if not m:
-        raise ValueError("Invalid APDU format: " + data)
+        raise ValueError(f"Invalid APDU format: {data}")
     cla = int(m.group("cla") or "00", 16)
     ins = int(m.group("ins"), 16)
     params = int(m.group("params") or "0000", 16)
     body = a2b_hex(m.group("body") or "")
-    if m.group("check"):
-        sw: Optional[int] = int(m.group("sw") or "9000", 16)
-    else:
-        sw = None
+    sw = int(m.group("sw") or "9000", 16) if m.group("check") else None
     p1, p2 = params >> 8, params & 0xFF
     return (cla, ins, p1, p2, body), sw
 
@@ -138,7 +135,7 @@ def apdu(ctx, no_pretty, app, apdu, send_apdu):
 
     if app:
         is_first = False
-        click.echo("SELECT AID: " + _hex(app))
+        click.echo(f"SELECT AID: {_hex(app)}")
         resp = protocol.select(app)
         _print_response(resp, SW.OK, no_pretty)
 
@@ -149,7 +146,7 @@ def apdu(ctx, no_pretty, app, apdu, send_apdu):
             else:
                 is_first = False
             apdu = a2b_hex(apdu)
-            click.echo("SEND: " + _hex(apdu))
+            click.echo(f"SEND: {_hex(apdu)}")
             resp, sw = protocol.connection.send_and_receive(apdu)
             _print_response(resp, sw, no_pretty)
     else:  # Standard mode
@@ -161,8 +158,8 @@ def apdu(ctx, no_pretty, app, apdu, send_apdu):
             header, body = apdu[:4], apdu[4]
             req = _hex(struct.pack(">BBBB", *header))
             if body:
-                req += " -- " + _hex(body)
-            click.echo("SEND: " + req)
+                req += f" -- {_hex(body)}"
+            click.echo(f"SEND: {req}")
             try:
                 resp = protocol.send_apdu(*apdu)
                 sw = SW.OK

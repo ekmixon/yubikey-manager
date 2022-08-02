@@ -28,7 +28,7 @@ class TestUtilityFunctions(unittest.TestCase):
         )
 
     def test_generate_static_pw(self):
-        for i in range(0, 38):
+        for i in range(38):
             self.assertRegex(
                 generate_static_pw(i), "^[cbdefghijklnrtuvCBDEFGHIJKLNRTUV]{%d}$" % i
             )

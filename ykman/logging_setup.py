@@ -62,7 +62,7 @@ def setup(log_level_name, log_file=None):
     )
 
     if log_level_value is None:
-        raise ValueError("Unknown log level: " + log_level_name)
+        raise ValueError(f"Unknown log level: {log_level_name}")
 
     logging.disable(logging.NOTSET)
     logging.basicConfig(

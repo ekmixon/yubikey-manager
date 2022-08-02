@@ -57,18 +57,12 @@ def print_app_status_table(supported_apps, enabled_apps):
     rows = []
     for app in SHOWN_CAPABILITIES:
         if app & usb_supported:
-            if app & usb_enabled:
-                usb_status = "Enabled"
-            else:
-                usb_status = "Disabled"
+            usb_status = "Enabled" if app & usb_enabled else "Disabled"
         else:
             usb_status = "Not available"
         if nfc_supported:
             if app & nfc_supported:
-                if app & nfc_enabled:
-                    nfc_status = "Enabled"
-                else:
-                    nfc_status = "Disabled"
+                nfc_status = "Enabled" if app & nfc_enabled else "Disabled"
             else:
                 nfc_status = "Not available"
             rows.append([str(app), usb_status, nfc_status])
@@ -103,11 +97,9 @@ def print_app_status_table(supported_apps, enabled_apps):
 
 
 def get_overall_fips_status(pid, info):
-    statuses = {}
-
     usb_enabled = info.config.enabled_capabilities[TRANSPORT.USB]
 
-    statuses["OTP"] = False
+    statuses = {"OTP": False}
     if usb_enabled & CAPABILITY.OTP:
         with connect_to_device(info.serial, [OtpConnection])[0] as conn:
             otp_app = YubiOtpSession(conn)
@@ -133,8 +125,7 @@ def _check_fips_status(pid, info):
 
     click.echo(f"FIPS Approved Mode: {'Yes' if all(fips_status.values()) else 'No'}")
 
-    status_keys = list(fips_status.keys())
-    status_keys.sort()
+    status_keys = sorted(fips_status.keys())
     for status_key in status_keys:
         click.echo(f"  {status_key}: {'Yes' if fips_status[status_key] else 'No'}")
 

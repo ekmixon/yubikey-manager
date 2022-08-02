@@ -47,7 +47,7 @@ def calculate_steam(app, credential, timestamp=None):
     offset = resp[-1] & 0x0F
     code = struct.unpack(">I", resp[offset : offset + 4])[0] & 0x7FFFFFFF
     chars = []
-    for i in range(5):
+    for _ in range(5):
         chars.append(STEAM_CHAR_TABLE[code % len(STEAM_CHAR_TABLE)])
         code //= len(STEAM_CHAR_TABLE)
     return "".join(chars)

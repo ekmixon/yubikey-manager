@@ -443,7 +443,7 @@ class TestOperations:
     def test_signature_can_be_verified_by_public_key(self, session):
         public_key = generate_key(session)
 
-        signed_data = bytes(random.randint(0, 255) for i in range(32))
+        signed_data = bytes(random.randint(0, 255) for _ in range(32))
 
         session.verify_pin(DEFAULT_PIN)
         sig = sign(session, SLOT.AUTHENTICATION, KEY_TYPE.ECCP256, signed_data)

@@ -120,8 +120,7 @@ def info(ctx):
         else:
             click.echo("PIN is not set.")
 
-        bio_enroll = ctap2.info.options.get("bioEnroll")
-        if bio_enroll:
+        if bio_enroll := ctap2.info.options.get("bioEnroll"):
             uv_retries, _ = client_pin.get_uv_retries()
             if uv_retries:
                 click.echo(
@@ -425,8 +424,7 @@ def verify(ctx, pin):
     For YubiKey FIPS this will unlock the session, allowing U2F registration.
     """
 
-    ctap2 = ctx.obj.get("ctap2")
-    if ctap2:
+    if ctap2 := ctx.obj.get("ctap2"):
         pin = _require_pin(ctx, pin)
         client_pin = ClientPin(ctap2)
         try:
@@ -554,7 +552,7 @@ def creds_delete(ctx, query, pin, force):
         or user_id.hex().startswith(query.lower())
         or query.lower() in _format_cred(rp_id, user_id, user_name)
     ]
-    if len(hits) == 0:
+    if not hits:
         cli_fail("No matches, nothing to be done.")
     elif len(hits) == 1:
         (rp_id, cred_id, user_id, user_name) = hits[0]
@@ -652,8 +650,7 @@ def bio_enroll(ctx, name, pin):
         click.echo("Place your finger against the sensor now...")
         try:
             template_id = enroller.capture()
-            remaining = enroller.remaining
-            if remaining:
+            if remaining := enroller.remaining:
                 click.echo(f"{remaining} more scans needed.")
         except CaptureError as e:
             logger.error(f"Capture error: {e.code}")
@@ -721,7 +718,7 @@ def bio_delete(ctx, template_id, pin, force):
     if key not in enrollments:
         # Match using template_id as NAME
         matches = [k for k in enrollments if enrollments[k] == template_id]
-        if len(matches) == 0:
+        if not matches:
             cli_fail(f"No fingerprint matching ID={template_id}")
         elif len(matches) > 1:
             cli_fail(

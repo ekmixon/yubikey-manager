@@ -110,7 +110,7 @@ _aliases = (
 
 def _find_match(data, selection):
     ln = len(selection)
-    for i in range(0, len(data) - ln + 1):
+    for i in range(len(data) - ln + 1):
         if data[i : i + ln] == selection:
             return i
 

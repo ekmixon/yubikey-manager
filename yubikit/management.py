@@ -253,9 +253,8 @@ class DeviceInfo:
             supported[TRANSPORT.USB] = CAPABILITY(0x3F)
         else:
             supported[TRANSPORT.USB] = CAPABILITY(bytes2int(data[TAG_USB_SUPPORTED]))
-        if TAG_USB_ENABLED in data:  # From YK 5.0.0
-            if not ((4, 0, 0) <= version < (5, 0, 0)):  # Broken on YK4
-                enabled[TRANSPORT.USB] = CAPABILITY(bytes2int(data[TAG_USB_ENABLED]))
+        if TAG_USB_ENABLED in data and not ((4, 0, 0) <= version < (5, 0, 0)):
+            enabled[TRANSPORT.USB] = CAPABILITY(bytes2int(data[TAG_USB_ENABLED]))
         if TAG_NFC_SUPPORTED in data:  # YK with NFC
             supported[TRANSPORT.NFC] = CAPABILITY(bytes2int(data[TAG_NFC_SUPPORTED]))
             enabled[TRANSPORT.NFC] = CAPABILITY(bytes2int(data[TAG_NFC_ENABLED]))
@@ -302,7 +301,7 @@ class Mode:
 
     @classmethod
     def from_code(cls, code: int) -> "Mode":
-        code = code & 0b00000111
+        code &= 0b00000111
         return cls(_MODES[code])
 
 
@@ -408,11 +407,10 @@ class _ManagementCtapBackend(_Backend):
     def __init__(self, fido_connection):
         self.ctap = fido_connection
         version = fido_connection.device_version
-        if version[0] < 4:  # Prior to YK4 this was not firmware version
-            if not (
-                version[0] == 0 and fido_connection.capabilities & CTAP_CAPABILITY.CBOR
-            ):
-                version = (3, 0, 0)  # Guess that it's a NEO
+        if version[0] < 4 and not (
+            version[0] == 0 and fido_connection.capabilities & CTAP_CAPABILITY.CBOR
+        ):
+            version = (3, 0, 0)  # Guess that it's a NEO
         self.version = Version(*version)
 
     def close(self):
